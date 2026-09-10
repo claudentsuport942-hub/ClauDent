@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+functions/
+firebase-debug.log
+vite-*.log
+
+.tmp/
