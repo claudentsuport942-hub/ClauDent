@@ -14,4 +14,3 @@ export const readLegacyHygieneOptions = (value = '') => {
   const other = parts.filter((item) => !HYGIENE_OPTIONS.some((option) => option === item)).join(', ');
   return { options: [...known, ...(other ? ['Otros'] : [])], other };
 };
-
