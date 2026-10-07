@@ -136,6 +136,15 @@ const manualMovementDescriptions: Partial<Record<InventoryMovementType, string>>
   ajuste: "Correccion por conteo fisico; puede sumar o restar.",
 };
 
+const inventoryDialogContentClass =
+  "flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[calc(100dvh-2rem)]";
+
+const inventoryDialogHeaderClass = "px-5 pb-4 pr-12 pt-5 text-left sm:px-6 sm:pr-12 sm:pt-6";
+
+const inventoryDialogBodyClass = "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5 sm:px-6";
+
+const inventoryDialogFooterClass = "gap-2 border-t bg-background px-5 py-4 sm:gap-0 sm:px-6";
+
 const emptyProductForm = {
   nombre: "",
   marca: "",
@@ -721,7 +730,7 @@ const InventarioPage: React.FC = () => {
             </SectionHelp>
           </div>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
           <Input type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} />
           <Button type="button" variant="outline" onClick={() => setDateFilter(today())}>
             Hoy
@@ -738,12 +747,12 @@ const InventarioPage: React.FC = () => {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-[420px] p-0">
+            <PopoverContent align="end" className="w-[calc(100vw-2rem)] max-w-[420px] overflow-hidden p-0">
               <div className="border-b p-4">
                 <p className="font-semibold">Alertas de inventario</p>
                 <p className="text-sm text-muted-foreground">Stock, productos clasificados y retiros registrados.</p>
               </div>
-              <div className="max-h-[28rem] space-y-4 overflow-auto p-3">
+              <div className="max-h-[min(28rem,65dvh)] touch-pan-y space-y-4 overflow-y-auto overscroll-contain p-3 [-webkit-overflow-scrolling:touch]">
                 {inventoryAlertCount === 0 ? (
                   <div className="p-6 text-center text-sm text-muted-foreground">
                     No hay alertas de inventario por ahora.
@@ -873,7 +882,7 @@ const InventarioPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Productos activos</CardTitle>
@@ -927,7 +936,7 @@ const InventarioPage: React.FC = () => {
       </div>
 
       <Tabs defaultValue="productos" className="space-y-4">
-        <TabsList className="grid h-auto w-full grid-cols-2 md:w-fit md:grid-cols-5">
+        <TabsList className="grid h-auto w-full grid-cols-1 min-[420px]:grid-cols-2 md:w-fit md:grid-cols-5">
           <TabsTrigger value="productos">Productos</TabsTrigger>
           <TabsTrigger value="reabastecer">Reabastecer</TabsTrigger>
           <TabsTrigger value="categorias">Categorias</TabsTrigger>
@@ -1251,8 +1260,7 @@ const InventarioPage: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-auto">
-                <Table>
+              <InventoryTable label="Productos para reabastecer" className="min-w-[900px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Producto</TableHead>
@@ -1316,8 +1324,7 @@ const InventarioPage: React.FC = () => {
                       })
                     )}
                   </TableBody>
-                </Table>
-              </div>
+              </InventoryTable>
             </CardContent>
             {!productsLoading && filteredReplenishmentProducts.length > 0 && (
               <DataPagination
@@ -1351,9 +1358,8 @@ const InventarioPage: React.FC = () => {
                 </Button></Can>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="overflow-auto rounded-lg border">
-                <Table>
+            <CardContent className="p-0">
+              <InventoryTable label="Categorias de inventario" className="min-w-[760px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nombre</TableHead>
@@ -1420,8 +1426,7 @@ const InventarioPage: React.FC = () => {
                       })
                     )}
                   </TableBody>
-                </Table>
-              </div>
+              </InventoryTable>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1506,8 +1511,7 @@ const InventarioPage: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-auto">
-                <Table>
+              <InventoryTable label="Movimientos de inventario" className="min-w-[1180px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>
@@ -1576,8 +1580,7 @@ const InventarioPage: React.FC = () => {
                       ))
                     )}
                   </TableBody>
-                </Table>
-              </div>
+              </InventoryTable>
             </CardContent>
             {!movementsLoading && filteredMovements.length > 0 && (
               <DataPagination
@@ -1680,12 +1683,12 @@ const InventarioPage: React.FC = () => {
       </Tabs>
 
       <Dialog open={isProductDialogOpen && can(editingProductId ? "inventory.update" : "inventory.create")} onOpenChange={setIsProductDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className={`${inventoryDialogContentClass} max-w-2xl`}>
+          <DialogHeader className={inventoryDialogHeaderClass}>
             <DialogTitle>{editingProductId ? "Editar producto" : "Nuevo producto"}</DialogTitle>
             <DialogDescription>Alta de producto nuevo. Si ya existe, usa reabastecer.</DialogDescription>
           </DialogHeader>
-          <form id="product-form" onSubmit={handleSaveProduct} className="space-y-4">
+          <form id="product-form" onSubmit={handleSaveProduct} className={`${inventoryDialogBodyClass} space-y-4`}>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Nombre</Label>
@@ -1785,7 +1788,7 @@ const InventarioPage: React.FC = () => {
               <Textarea value={productForm.notas} onChange={(event) => setProductForm({ ...productForm, notas: event.target.value })} rows={3} />
             </div>
           </form>
-          <DialogFooter>
+          <DialogFooter className={inventoryDialogFooterClass}>
             <Button type="button" variant="outline" onClick={() => setIsProductDialogOpen(false)} disabled={isSavingProduct}>
               Cancelar
             </Button>
@@ -1797,12 +1800,12 @@ const InventarioPage: React.FC = () => {
       </Dialog>
 
       <Dialog open={isCategoryDialogOpen && can("inventory.categories.manage")} onOpenChange={setIsCategoryDialogOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
+        <DialogContent className={`${inventoryDialogContentClass} max-w-xl`}>
+          <DialogHeader className={inventoryDialogHeaderClass}>
             <DialogTitle>{editingCategoryId ? "Editar categoria" : "Nueva categoria"}</DialogTitle>
             <DialogDescription>Crea categorias reutilizables para organizar los productos.</DialogDescription>
           </DialogHeader>
-          <form id="category-form" onSubmit={handleSaveCategory} className="space-y-4">
+          <form id="category-form" onSubmit={handleSaveCategory} className={`${inventoryDialogBodyClass} space-y-4`}>
             <div className="space-y-2">
               <Label>Nombre</Label>
               <Input value={categoryForm.nombre} onChange={(event) => setCategoryForm({ ...categoryForm, nombre: event.target.value })} />
@@ -1812,7 +1815,7 @@ const InventarioPage: React.FC = () => {
               <Textarea value={categoryForm.descripcion} onChange={(event) => setCategoryForm({ ...categoryForm, descripcion: event.target.value })} rows={3} />
             </div>
           </form>
-          <DialogFooter>
+          <DialogFooter className={inventoryDialogFooterClass}>
             <Button type="button" variant="outline" onClick={() => setIsCategoryDialogOpen(false)} disabled={isSavingCategory}>
               Cancelar
             </Button>
@@ -1824,12 +1827,12 @@ const InventarioPage: React.FC = () => {
       </Dialog>
 
       <Dialog open={isStockEntryDialogOpen && canRestock} onOpenChange={setIsStockEntryDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
+        <DialogContent className={`${inventoryDialogContentClass} max-w-4xl`}>
+          <DialogHeader className={inventoryDialogHeaderClass}>
             <DialogTitle>Reabastecer stock por lote</DialogTitle>
             <DialogDescription>Suma stock a productos existentes por proveedor y documento.</DialogDescription>
           </DialogHeader>
-          <form id="stock-entry-form" onSubmit={handleRegisterStockEntry} className="space-y-4">
+          <form id="stock-entry-form" onSubmit={handleRegisterStockEntry} className={`${inventoryDialogBodyClass} space-y-4`}>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label>Proveedor</Label>
@@ -1847,7 +1850,7 @@ const InventarioPage: React.FC = () => {
 
             <div className="rounded-lg border p-4">
               <div className="grid gap-3 lg:grid-cols-[1fr_110px_140px_170px_auto]">
-                <Popover open={isStockEntryProductSearchOpen} onOpenChange={setIsStockEntryProductSearchOpen}>
+                <Popover modal open={isStockEntryProductSearchOpen} onOpenChange={setIsStockEntryProductSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       type="button"
@@ -1928,7 +1931,7 @@ const InventarioPage: React.FC = () => {
             </div>
 
             <div className="overflow-auto rounded-lg border">
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Producto</TableHead>
@@ -1982,7 +1985,7 @@ const InventarioPage: React.FC = () => {
               </div>
             </div>
           </form>
-          <DialogFooter>
+          <DialogFooter className={inventoryDialogFooterClass}>
             <Button type="button" variant="outline" onClick={() => setIsStockEntryDialogOpen(false)} disabled={isSavingStockEntry}>
               Cancelar
             </Button>
@@ -1994,12 +1997,12 @@ const InventarioPage: React.FC = () => {
       </Dialog>
 
       <Dialog open={isMovementDialogOpen && can("inventory.stock.adjust")} onOpenChange={setIsMovementDialogOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
+        <DialogContent className={`${inventoryDialogContentClass} max-w-xl`}>
+          <DialogHeader className={inventoryDialogHeaderClass}>
             <DialogTitle>Salida o ajuste de inventario</DialogTitle>
             <DialogDescription>Para cambios de stock que no son venta ni reabastecimiento.</DialogDescription>
           </DialogHeader>
-          <form id="movement-form" onSubmit={handleRegisterMovement} className="space-y-4">
+          <form id="movement-form" onSubmit={handleRegisterMovement} className={`${inventoryDialogBodyClass} space-y-4`}>
             <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
               Registra casos como producto danado, caducidad, uso clinico, devolucion o diferencia por conteo fisico.
               La nota es opcional; el sistema guardara el tipo de movimiento y el stock anterior/nuevo.
@@ -2092,7 +2095,7 @@ const InventarioPage: React.FC = () => {
               />
             </div>
           </form>
-          <DialogFooter>
+          <DialogFooter className={inventoryDialogFooterClass}>
             <Button type="button" variant="outline" onClick={() => setIsMovementDialogOpen(false)} disabled={isSavingMovement}>
               Cancelar
             </Button>

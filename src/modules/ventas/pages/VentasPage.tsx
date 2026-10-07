@@ -307,6 +307,9 @@ const VentasPage: React.FC = () => {
   };
 
   const validateSaleBeforeCheckout = () => {
+    if ((patientId !== 'mostrador' && !patients.some((patient) => patient.id === patientId)) || serviceItems.some((item) => !services.some((service) => service.id === item.servicioId))) {
+      toast.error('El paciente o un servicio fue eliminado. Actualiza la selección antes de registrar la venta.'); return false;
+    }
     if (!hasOpenCashForSelectedDate) {
       toast.error(openCashClosure ? `La caja abierta es del ${openCashClosure.fecha}` : "Abre caja antes de vender");
       return false;
@@ -314,11 +317,6 @@ const VentasPage: React.FC = () => {
 
     if (!hasItems) {
       toast.error("Agrega tratamientos o productos al resumen");
-      return false;
-    }
-
-    if (serviceItems.length > 0 && patientId === "mostrador") {
-      toast.error("Selecciona un paciente para registrar tratamientos en historial");
       return false;
     }
 
@@ -532,9 +530,9 @@ const VentasPage: React.FC = () => {
             <form onSubmit={handleRequestSaleConfirmation} className="space-y-5">
               <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-2 lg:col-span-2">
-                  <Label>Paciente</Label>
+                  <Label htmlFor="sale-patient">Paciente (opcional en mostrador)</Label>
                   <Select value={patientId} onValueChange={setPatientId} disabled={patientsLoading || isSaving}>
-                    <SelectTrigger>
+                    <SelectTrigger id="sale-patient">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -547,7 +545,9 @@ const VentasPage: React.FC = () => {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Para tratamientos, selecciona paciente para guardar historial.
+                    {patientId === "mostrador"
+                      ? "Venta sin paciente: pago completo, sin abonos ni historial clinico."
+                      : "Los tratamientos se guardaran en el historial del paciente seleccionado."}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -855,13 +855,13 @@ const VentasPage: React.FC = () => {
                 <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Liquidacion</Label>
+                      <Label htmlFor="sale-settlement">Liquidacion</Label>
                       <Select
-                        value={settlementMode}
+                        value={effectiveSettlementMode}
                         onValueChange={(value) => setSettlementMode(value as SettlementMode)}
                         disabled={isSaving || !canUseInstallments}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger id="sale-settlement">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -871,14 +871,15 @@ const VentasPage: React.FC = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Abono inicial</Label>
+                      <Label htmlFor="sale-initial-payment">Abono inicial</Label>
                       <Input
+                        id="sale-initial-payment"
                         type="number"
                         min="0"
                         step="0.01"
-                        value={settlementMode === "completo" ? String(saleTotal || "") : initialPayment}
+                        value={effectiveSettlementMode === "completo" ? String(saleTotal || "") : initialPayment}
                         onChange={(event) => setInitialPayment(event.target.value)}
-                        disabled={isSaving || settlementMode === "completo" || !canUseInstallments}
+                        disabled={isSaving || effectiveSettlementMode === "completo" || !canUseInstallments}
                         placeholder="0.00"
                       />
                     </div>
@@ -897,7 +898,7 @@ const VentasPage: React.FC = () => {
                   </div>
                   {!canUseInstallments && (
                     <p className="text-xs text-muted-foreground">
-                      Para usar abonos selecciona paciente y agrega al menos un tratamiento.
+                      Las ventas de mostrador se liquidan completas. Para abonos, selecciona un paciente.
                     </p>
                   )}
                 </div>
@@ -968,7 +969,7 @@ const VentasPage: React.FC = () => {
 
                     return (
                       <TableRow key={payment.id}>
-                        <TableCell className="font-medium">{payment.pacienteNombre}</TableCell>
+                        <TableCell className="font-medium">{payment.pacienteNombre}{payment.pacienteId && !patients.some((patient) => patient.id === payment.pacienteId) && <Badge variant="secondary" className="ml-1">Paciente eliminado</Badge>}</TableCell>
                         <TableCell>{payment.concepto}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="gap-1">
@@ -1023,6 +1024,12 @@ const VentasPage: React.FC = () => {
                 <p className="font-medium">{paymentMethodLabel[method]}</p>
               </div>
             </div>
+
+            {patientId === "mostrador" && (
+              <p className="text-sm text-muted-foreground">
+                Venta sin paciente: se registrara el cobro en caja, sin crear historial clinico ni saldo pendiente.
+              </p>
+            )}
 
             {serviceItems.length > 0 && (
               <div className="space-y-2">

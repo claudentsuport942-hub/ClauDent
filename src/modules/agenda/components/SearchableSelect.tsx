@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search, X } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
@@ -51,8 +51,36 @@ const SearchableSelect = ({
   onInputValueChange,
   onCustomValue,
 }: SearchableSelectProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [localQuery, setLocalQuery] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+
+    const closeWhenOutside = (event: PointerEvent | FocusEvent) => {
+      if (
+        event.target instanceof Node &&
+        !containerRef.current?.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeWhenOutside, true);
+    document.addEventListener("focusin", closeWhenOutside);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeWhenOutside, true);
+      document.removeEventListener("focusin", closeWhenOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
 
   const selectedOption = options.find((option) => option.value === value);
 
@@ -123,8 +151,8 @@ const SearchableSelect = ({
   };
 
   return (
-    <div className="relative">
-      <div className="relative">
+    <div ref={containerRef} className="relative min-w-0 w-full">
+      <div className="relative min-w-0">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
         <Input
@@ -132,12 +160,9 @@ const SearchableSelect = ({
           value={visibleValue}
           disabled={disabled}
           placeholder={placeholder}
-          className="pl-9 pr-10"
+          className="w-full min-w-0 pl-9 pr-10"
           autoComplete="off"
           onFocus={() => setOpen(true)}
-          onBlur={() => {
-            window.setTimeout(() => setOpen(false), 150);
-          }}
           onChange={(event) => handleInputChange(event.target.value)}
         />
 
@@ -155,7 +180,7 @@ const SearchableSelect = ({
       </div>
 
       {open && !disabled && (
-        <div className="absolute z-[60] mt-2 max-h-72 w-full overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+        <div className="absolute inset-x-0 z-[60] mt-2 max-h-[min(18rem,60dvh)] min-w-0 touch-pan-y overflow-y-auto overscroll-contain rounded-md border bg-popover p-1 text-popover-foreground shadow-md [-webkit-overflow-scrolling:touch]">
           {filteredOptions.length === 0 ? (
             <div className="px-3 py-3 text-sm text-muted-foreground">
               {emptyMessage}
@@ -170,11 +195,11 @@ const SearchableSelect = ({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => handleSelect(option)}
               >
-                <span>
-                  <span className="block font-medium">{option.label}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block break-words font-medium">{option.label}</span>
 
                   {option.description && (
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block break-words text-xs text-muted-foreground">
                       {option.description}
                     </span>
                   )}

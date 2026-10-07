@@ -89,7 +89,7 @@ const AppHeader = () => {
         />
 
         {showResults && searchInput.trim() !== "" && (
-          <div className="absolute left-0 top-full z-50 mt-2 max-h-[300px] w-full overflow-y-auto rounded-lg border bg-popover text-popover-foreground shadow-lg">
+          <div className="absolute left-0 top-full z-50 mt-2 max-h-[min(300px,60dvh)] w-full touch-pan-y overflow-y-auto overscroll-contain rounded-lg border bg-popover text-popover-foreground shadow-lg [-webkit-overflow-scrolling:touch]">
             {filteredPatients.length > 0 ? (
               <ul className="py-1">
                 {filteredPatients.map((patient) => (
@@ -160,7 +160,7 @@ export const ProtectedLayout: React.FC = () => (
     <AppSidebar />
     <SidebarInset className="flex min-h-screen min-w-0 w-full flex-col overflow-x-hidden bg-background transition-all">
       <AppHeader />
-      <main className="app-module-content min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 pb-20 sm:p-4 lg:p-5 lg:pb-5">
+      <main className="app-module-content min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-5">
         <Outlet />
       </main>
       <div className="block lg:hidden">
