@@ -506,9 +506,9 @@ export const cashService = {
       throw new Error("Agrega al menos un tratamiento o producto a la venta.");
     }
 
-    const pacienteNombre = input.pacienteNombre.trim() || (servicios.length === 0 ? "Venta mostrador" : "");
+    const pacienteNombre = input.pacienteId ? input.pacienteNombre.trim() : "Venta mostrador";
     if (!pacienteNombre) {
-      throw new Error("Selecciona un paciente para registrar tratamientos.");
+      throw new Error("El paciente seleccionado debe tener nombre.");
     }
 
     const subtotalServicios = calculateDirectSaleSubtotal(servicios);
